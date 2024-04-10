@@ -4,11 +4,9 @@ use std::process;
 
 fn main() {
     // input arguments from command line
-    let args: Vec<String> = env::args().collect();
-
     // create a configuration that receives arguments
     // if cannot parsing arguments during this time, exit the program
-    let config = Config::new(&args).unwrap_or_else(|err| {
+    let config = Config::new(env::args()).unwrap_or_else(|err| {
         eprintln!("Problem parsing arguments: {}", err);
         process::exit(1);
     });

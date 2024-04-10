@@ -14,19 +14,23 @@ pub struct Config {
 
 impl Config {
     // create and initialize a configuratoion
-    pub fn new(args: &[String]) -> Result<Config, &'static str>{
-        // if the number of the argument is smaller than 3
-        // return Not enough arguments
-        if args.len() < 3 {
-            return Err("Not enough arguments");
-        }
-        
-        // copy the configuration content
-        let query = args[1].clone();
-        let file_path = args[2].clone();
-        // if the number of the argument reaches 4
-        // and the last argument is "-i" return true
-        let sensitive_flag = if args.len() == 4 && args[3] == "-i" {true} else {false};
+    pub fn new(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str>{
+        args.next();
+
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a query string"),
+        };
+
+        let file_path = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Didn't get a file_path"),
+        };
+
+        let sensitive_flag = match args.next() {
+            Some(arg ) => if arg == "-i" { true } else { false },
+            None => false,
+        };
 
         // return the configuration
         Ok( Config {query, file_path, sensitive_flag} )
@@ -59,34 +63,21 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
 // search a normal word in a normal content
 fn search<'a> (query: &str, contents: &'a str) -> Vec<&'a str>{
-    // create "results" to receieve final search results
-    let mut results = Vec::new();
-
-    // if the word is found, push the line into "results"
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-
-    // return the final answer
-    results
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 // search a lowercase word in a lowercase content
 fn search_no_sensitive<'a> (query: &str, contents: &'a str) -> Vec<&'a str>{
-    // cover the original string to a lowercase one
-    let query = query.to_lowercase();
-    // create "results" to receieve final search results
-    let mut results = Vec::new();
-
-    // if the word is found, push the line into "results"
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line);
-        }
-    }
-
-    // return the final answer
-    results
+    contents
+        .lines()
+        .filter(
+            |line| 
+            line
+                .to_lowercase()
+                .contains(&query.to_lowercase())
+        )
+        .collect()
 }
